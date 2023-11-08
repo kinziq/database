@@ -1,0 +1,109 @@
+import sqlite3
+
+studentlist = []
+
+def create_connection(db_file):
+    #create a database connection to the SQLite database
+    #return: Connection object or None
+    conn = None
+    try:
+        conn = sqlite3.connect(db_file)
+    except Exception as e:
+        print(e)
+    return conn
+def create_table(conn,table,columns):
+    col = ",".join(columns)
+    sql = f'''CREATE TABLE IF NOT EXISTS {table}( id INTEGER PRIMARY KEY, {col});'''
+    conn.execute(sql)
+def insert_db(conn,table, columns,data):
+    sql=f'''INSERT INTO {table} {tuple(columns)} VALUES {tuple(data)};'''
+    conn.execute(sql)
+    conn.commit()
+def select_db(conn,table,columns_and_data=None):
+    if not columns_and_data==None:
+        col = " AND ".join(columns_and_data)
+        sql=f'''SELECT * FROM {table} WHERE {col}'''
+        return conn.execute(sql)
+    else:
+        sql =f"SELECT * from {table}"
+        return conn.execute(sql)
+def update_db(conn,table,columns_and_data,where_to_update):
+    col = ",".join(columns_and_data)
+    sql = f"UPDATE {table} set {col} where {where_to_update}"
+    conn.execute(sql)
+    conn.commit()  
+def delete_db(conn,table,column,what_to_remove):
+    sql=f'''DELETE FROM {table} WHERE {column} = "{what_to_remove}"'''
+    conn.execute(sql)
+    conn.commit()
+
+connection = create_connection('Students.db')
+#                         table        columns with type
+create_table(connection,"Students",["Names TEXT","English REAL","Math REAL","Biology REAL", "Physics REAL"]) 
+#                    table name     columns                 data
+#insert_db(connection,"students",["name","grade"])
+
+results=select_db(connection,"Students").fetchall()
+
+
+
+def add_persons():
+    run = True
+    while run:
+        connection = create_connection('Students.db')
+        # Will initialize the student and grade inputs
+        student_name = (input("Please input the name of the student you would like to add: \n"))
+        student_gradeE = (int(input("Please enter the English grade you would like the assign to the student: ")))
+        student_gradeM = (int(input("Please enter the Math grade you would like the assign to the student: ")))
+        student_gradeB = (int(input("Please enter the Biology grade you would like the assign to the student: ")))
+        student_gradeP = (int(input("Please enter the Physics grade you would like the assign to the student: " )))
+        studentlist.append([student_name, student_gradeE, student_gradeM, student_gradeB, student_gradeP])
+        # Will print the added student's subject's and grades for the corresponding subjects.   
+        print(f"\n{student_name}'s grades in:")
+        print(f"English: {student_gradeE}")
+        print(f"Math: {student_gradeM}")
+        print(f"Biology: {student_gradeB}")
+        print(f"Physics: {student_gradeP}")
+        break
+    
+# Will print the students stored in the list as well as their grades 
+def students_list():
+    print("\nStudents List:\n-------------")
+    connection = create_connection('Students.db')
+    for students in studentlist:
+        print(f'{students[0]}')
+        # Line below will print grades of the students
+        print(f'English: {students[1]}')
+        print(f'Math: {students[2]}')
+        print(f'Biology: {students[3]}')
+        print(f'Physics: {students[4]}\n-------------')
+
+def student_avg():
+    studentlist=select_db(connection,"Students").fetchall()
+    for grade in studentlist:
+          print(f"{grade[0]}'s average is: {(int(grade[1]+grade[2]+grade[3]+grade[4])/4)} %")
+       
+
+def course_avg():
+    Englishavg=0
+    Mathavg=0
+    Biologyavg=0
+    Physicsavg=0
+    studentlist=select_db(connection,"Students").fetchall()
+    for course in studentlist:
+          Englishavg += sum({course[1]/4})
+          Mathavg += sum({course[2]/4})
+          Biologyavg += sum({course[3]/4})
+          Physicsavg += sum({course[4]/4})
+          
+    print(f"The course average for the English subject is: {Englishavg} %\nThe course average for Math is: {Mathavg} %\nThe course average for Biology is: {Biologyavg} %\nThe course average for Physics is: {Physicsavg} %")
+
+def exit_program():
+    exit()
+    
+done = False
+while not done:
+    print("\n0: To add people to the list\n1: To print the students list\n2: To print the students average.\n3: To find the course averages\n4:To exit the program.\n")
+    menus = dict({0: add_persons, 1:students_list , 2:student_avg , 3: course_avg, 4:exit})
+    choice = int(input())
+    menus[choice]()
